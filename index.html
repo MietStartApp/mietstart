@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MietStart - Deininger Umzugs- & Kautionsrechner</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: var(--primary);
+            margin: 0 0 8px 0;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-group input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+
+        .result-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .result-title {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .result-amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .breakdown {
+            text-align: left;
+            font-size: 13px;
+            border-top: 1px solid #bfdbfe;
+            padding-top: 12px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .btn-pay {
+            width: 100%;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.2s;
+        }
+
+        .btn-pay:hover {
+            background-color: #059669;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>MietStart DE</h1>
+        <p>Berechne deine echten Umzugskosten in Deutschland</p>
+    </div>
+
+    <div class="card">
+        <h3>1. Mietdaten</h3>
+        <div class="form-group">
+            <label for="kaltmiete">Nettokaltmiete (€)</label>
+            <input type="number" id="kaltmiete" placeholder="z.B. 750" oninput="calculate()">
+        </div>
+        <div class="form-group">
+            <label for="nebenkosten">Nebenkosten geschätzt (€)</label>
+            <input type="number" id="nebenkosten" placeholder="z.B. 200" oninput="calculate()">
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>2. Typische Umzugskosten</h3>
+        <div class="checkbox-group">
+            <input type="checkbox" id="kaution" checked onchange="calculate()">
+            <label for="kaution">Mietkaution (3 Kaltmieten)</label>
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="transporter" onchange="calculate()">
+            <label for="transporter">Miettransporter / Sprinter (~120 €)</label>
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="halteverbot" onchange="calculate()">
+            <label for="halteverbot">Halteverbotszone (~80 €)</label>
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="post" onchange="calculate()">
+            <label for="post">Nachsendeservice Deutsche Post (~35 €)</label>
+        </div>
+        <div class="form-group" style="margin-top: 10px;">
+            <label for="kueche">Ablösevereinbarung / Küche (€)</label>
+            <input type="number" id="kueche" placeholder="z.B. 500" oninput="calculate()">
+        </div>
+    </div>
+
+    <div class="result-box">
+        <div class="result-title">Benötigtes Startkapital</div>
+        <div class="result-amount" id="totalAmount">0,00 €</div>
+        
+        <div class="breakdown" id="breakdownList">
+            <!-- Se llena dinámicamente -->
+        </div>
+
+        <button class="btn-pay" onclick="alert('Funktion folgt: PDF Dossier für 2,99 € herunterladen!')">
+            📄 PDF-Dossier & Checklist speichern (2,99 €)
+        </button>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 MietStart DE · Impressum · Datenschutz</p>
+    </footer>
+</div>
+
+<script>
+    function calculate() {
+        const kaltmiete = parseFloat(document.getElementById('kaltmiete').value) || 0;
+        const nebenkosten = parseFloat(document.getElementById('nebenkosten').value) || 0;
+        const kueche = parseFloat(document.getElementById('kueche').value) || 0;
+
+        const includeKaution = document.getElementById('kaution').checked;
+        const includeTransporter = document.getElementById('transporter').checked;
+        const includeHalteverbot = document.getElementById('halteverbot').checked;
+        const includePost = document.getElementById('post').checked;
+
+        let kautionVal = includeKaution ? (kaltmiete * 3) : 0;
+        let transporterVal = includeTransporter ? 120 : 0;
+        let halteverbotVal = includeHalteverbot ? 80 : 0;
+        let postVal = includePost ? 35 : 0;
+
+        let total = kaltmiete + nebenkosten + kautionVal + transporterVal + halteverbotVal + postVal + kueche;
+
+        document.getElementById('totalAmount').innerText = total.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+
+        let breakdownHTML = `
+            <div class="breakdown-item"><span>Erste Monatsmiete:</span> <strong>${(kaltmiete + nebenkosten).toFixed(2)} €</strong></div>
+            <div class="breakdown-item"><span>Mietkaution:</span> <strong>${kautionVal.toFixed(2)} €</strong></div>
+            <div class="breakdown-item"><span>Extras & Logistik:</span> <strong>${(transporterVal + halteverbotVal + postVal + kueche).toFixed(2)} €</strong></div>
+        `;
+        document.getElementById('breakdownList').innerHTML = breakdownHTML;
+    }
+</script>
+
+</body>
+</html>
