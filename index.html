@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MietStart - Deininger Umzugs- & Kautionsrechner</title>
+    <!-- Librería HTML2PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -139,10 +141,31 @@
             cursor: pointer;
             margin-top: 16px;
             transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            box-sizing: border-box;
         }
 
         .btn-pay:hover {
             background-color: #059669;
+        }
+
+        .btn-download {
+            width: 100%;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-download:hover {
+            background-color: #1d4ed8;
         }
 
         footer {
@@ -150,6 +173,120 @@
             font-size: 12px;
             color: var(--text-muted);
             margin-top: 24px;
+        }
+
+        /* ESTILOS PARA LA GENERACIÓN DEL PDF */
+        #pdf-template {
+            display: none;
+            background: #ffffff;
+            width: 100%;
+        }
+
+        .pdf-page {
+            padding: 40px;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #1e293b;
+            line-height: 1.5;
+            background: #ffffff;
+            box-sizing: border-box;
+        }
+
+        .pdf-header {
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .pdf-header h2 {
+            font-size: 22px;
+            color: #1e3a8a;
+            margin: 0;
+        }
+
+        .pdf-header span {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .pdf-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+
+        .pdf-table th, .pdf-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        .pdf-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .total-box {
+            background-color: #eff6ff;
+            border-left: 5px solid #2563eb;
+            padding: 18px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-box h3 {
+            font-size: 18px;
+            color: #1e3a8a;
+            margin: 0;
+        }
+
+        .total-box span {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .pdf-section {
+            margin-bottom: 18px;
+            background-color: #f8fafc;
+            padding: 12px 16px;
+            border-left: 4px solid #2563eb;
+            border-radius: 4px;
+        }
+
+        .pdf-section h3 {
+            font-size: 15px;
+            margin: 0 0 6px 0;
+            color: #1e3a8a;
+        }
+
+        .pdf-section p {
+            font-size: 13px;
+            color: #334155;
+            margin: 0 0 4px 0;
+        }
+
+        .pdf-footer {
+            margin-top: 30px;
+            font-size: 11px;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 12px;
+        }
+
+        .html2pdf__page-break {
+            page-break-after: always;
+            break-after: page;
+            display: block;
+            height: 0;
         }
     </style>
 </head>
@@ -197,7 +334,7 @@
         </div>
     </div>
 
-   <div class="result-box">
+    <div class="result-box">
         <div class="result-title">Benötigtes Startkapital</div>
         <div class="result-amount" id="totalAmount">0,00 €</div>
         
@@ -205,14 +342,16 @@
             <!-- Se llena dinámicamente -->
         </div>
 
+        <button class="btn-download" onclick="downloadPDF()">📄 MietStart-Dossier herunterladen (PDF 3 S.)</button>
+
         <a href="https://mietstart.gumroad.com/l/spvaw" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
             <button class="btn-pay">
-                📄 MietStart-Dossier jetzt sichern (2,99 €)
+                🛒 Vollständiges MietStart-Paket kaufen (2,99 €)
             </button>
         </a>
     </div>
 
-   <!-- Ventanita Flotante Modal (Impressum / Datenschutz) -->
+    <!-- Modal Impressum / Datenschutz -->
     <div id="legalModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
         <div style="background:#fff; padding:25px; border-radius:12px; max-width:500px; width:90%; max-height:80vh; overflow-y:auto; font-family:sans-serif; font-size:14px; line-height:1.5; color:#333; position:relative;">
             <button onclick="document.getElementById('legalModal').style.display='none'" style="position:absolute; top:12px; right:15px; border:none; background:none; font-size:20px; cursor:pointer; color:#888;">&times;</button>
@@ -220,50 +359,155 @@
         </div>
     </div>
 
-    <!-- Pie de página con enlaces legales -->
     <footer>
-        <p>&copy; 2026 MietStart DE · 
+        <p>&copy; MietStart DE · 
             <a href="javascript:void(0)" onclick="showLegal('impressum')" style="color:inherit; text-decoration:underline; cursor:pointer;">Impressum</a> · 
             <a href="javascript:void(0)" onclick="showLegal('datenschutz')" style="color:inherit; text-decoration:underline; cursor:pointer;">Datenschutz</a>
         </p>
     </footer>
+</div>
 
-    <script>
-        function showLegal(type) {
-            const modal = document.getElementById('legalModal');
-            const content = document.getElementById('modalContent');
-            
-            if (type === 'impressum') {
-                content.innerHTML = `
-                    <h2 style="margin-top:0;">Impressum</h2>
-                    <p><strong>Angaben gemäß § 5 DDG:</strong></p>
-                    <p><strong>MietStart</strong><br>
-                    Mercedes Herrera<br>
-                    Grasriete 18<br>
-                    49824 Emlichheim<br>
-                    Deutschland</p>
-                    <p><strong>Kontakt:</strong><br>
-                    E-Mail: mietstartapp@gmail.com</p>
-                    <p><strong>EU-Streitschlichtung:</strong><br>
-                    Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: 
-                    <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">https://ec.europa.eu/consumers/odr</a>.</p>
-                `;
-            } else if (type === 'datenschutz') {
-                content.innerHTML = `
-                    <h2 style="margin-top:0;">Datenschutzerklärung</h2>
-                    <p><strong>1. Datenschutz auf einen Blick</strong><br>
-                    Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Diese Anwendung erfasst oder speichert keine personenbezogenen Daten direkt in eigenen Datenbanken. Alle Berechnungen erfolgen lokal auf Ihrem Gerät.</p>
-                    <p><strong>2. Hosting (Vercel)</strong><br>
-                    Diese Webseite wird bei Vercel Inc. gehostet. Beim Aufruf der Seite werden technische Daten (z. B. IP-Adresse, Server-Logfiles) automatisch erfasst.</p>
-                    <p><strong>3. Zahlungsabwicklung (Gumroad)</strong><br>
-                    Wenn Sie auf den Button zum Kauf des Dossiers klicken, werden Sie zu Gumroad Inc. weitergeleitet. Gumroad verarbeitet Ihre Daten (z. B. E-Mail, Zahlungsdaten) zur Kaufabwicklung und Zusendung des PDF-Dossiers. Es gelten die Datenschutzbestimmungen von Gumroad.</p>
-                    <p><strong>4. Ihre Rechte</strong><br>
-                    Sie haben das Recht auf Auskunft, Berichtigung oder Löschung Ihrer Daten. Kontaktieren Sie uns dazu unter: mietstartapp@gmail.com</p>
-                `;
-            }
-            modal.style.display = 'flex';
-        }
-    </script>
+<!-- TEMPLATE PDF (3 PÁGINAS) -->
+<div id="pdf-template">
+    
+    <!-- PÁGINA 1: PRESUPUESTO -->
+    <div class="pdf-page">
+      <div class="pdf-header">
+        <h2>MietStart DE – Presupuesto de Entrada</h2>
+        <span>www.mietstart.vercel.app</span>
+      </div>
+      
+      <p style="margin-bottom: 20px; font-size: 14px; color: #475569;">Resumen detallado del capital necesario para la firma del contrato y mudanza:</p>
+      
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th>Detalle</th>
+            <th>Importe</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Primer Warmmiete</b></td>
+            <td>Nettokaltmiete + Nebenkosten (Primer mes)</td>
+            <td id="pdf-warmmiete">0,00 €</td>
+          </tr>
+          <tr>
+            <td><b>Mietkaution (Fianza)</b></td>
+            <td>Garantía legal (hasta 3 meses de Kaltmiete)</td>
+            <td id="pdf-kaution">0,00 €</td>
+          </tr>
+          <tr>
+            <td><b>Ablösevereinbarung</b></td>
+            <td>Compra de cocina o mobiliario al inquilino anterior</td>
+            <td id="pdf-abloese">0,00 €</td>
+          </tr>
+          <tr>
+            <td><b>Mudanza y Logística</b></td>
+            <td>Furgoneta / Permiso de aparcamiento</td>
+            <td id="pdf-transporter">0,00 €</td>
+          </tr>
+          <tr>
+            <td><b>Nachsendeservice</b></td>
+            <td>Reenvío de correo (Deutsche Post)</td>
+            <td id="pdf-post">0,00 €</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="total-box">
+        <h3>Capital Inicial Necesario (Benötigtes Startkapital):</h3>
+        <span id="pdf-total">0,00 €</span>
+      </div>
+
+      <div class="pdf-footer">
+        MietStart DE • Documento generado para planificación financiera de alquiler en Alemania
+      </div>
+    </div>
+
+    <div class="html2pdf__page-break"></div>
+
+    <!-- PÁGINA 2: ESPAÑOL -->
+    <div class="pdf-page">
+      <div class="pdf-header">
+        <h2>Guía de Conceptos y Costes (MietStart)</h2>
+        <span>Página 2 de 3</span>
+      </div>
+
+      <div class="pdf-section">
+        <h3>1. Nettokaltmiete y Nebenkosten</h3>
+        <p><b>Nettokaltmiete:</b> Precio básico exclusivo por el uso de la vivienda. Sobre este importe se calcula legalmente la fianza (<i>Mietkaution</i>).</p>
+        <p><b>Nebenkosten:</b> Gastos comunes y servicios (agua, calefacción, basura, limpieza comunitaria). La suma de ambos es la <b>Warmmiete</b>.</p>
+        <p><i>Nota:</i> La electricidad del hogar e internet se contratan por separado. A fin de año recibirás la liquidación anual (<i>Nebenkostenabrechnung</i>).</p>
+      </div>
+
+      <div class="pdf-section">
+        <h3>2. Mietkaution (Fianza)</h3>
+        <p><b>Límite legal:</b> Máximo 3 <i>Nettokaltmieten</i> (§ 551 BGB).</p>
+        <p><b>Pago en plazos:</b> Tienes el derecho legal a pagarla en 3 cuotas mensuales consecutivas.</p>
+        <p><b>Devolución:</b> El propietario dispone de hasta 6 meses (o más si falta la liquidación anual) para devolverla tras revisar el estado de la vivienda.</p>
+      </div>
+
+      <div class="pdf-section">
+        <h3>3. Ablösevereinbarung / Einbauküche (EBK)</h3>
+        <p><b>Traspaso de cocina:</b> Pago por la compra de la cocina o muebles al inquilino saliente (no al dueño).</p>
+        <p><b>Inversión recuperable:</b> La cocina pasa a ser 100% tu propiedad. Al mudarte en el futuro, se la venderás al siguiente inquilino recuperando gran parte de tu dinero.</p>
+      </div>
+
+      <div class="pdf-section">
+        <h3>4. Logística y Tasas Obligatorias</h3>
+        <p><b>Miettransporter & Halteverbotszone:</b> Alquiler de furgoneta y permiso municipal de aparcamiento para el día de la mudanza.</p>
+        <p><b>Nachsendeservice (Deutsche Post):</b> Servicio de reenvío de correo a tu nueva dirección durante 6 o 12 meses para no perder cartas importantes. <a href="https://www.deutschepost.de/de/n/nachsendeservice.html" target="_blank" style="color:#2563eb;">Solicitar en Deutsche Post</a>.</p>
+        <p><b>Rundfunkbeitrag (ARD/ZDF):</b> Tasa obligatoria por ley por hogar (no por persona).</p>
+      </div>
+
+      <div class="pdf-footer">
+        MietStart DE • Guía explicativa para inquilinos e inmigrantes en Alemania
+      </div>
+    </div>
+
+    <div class="html2pdf__page-break"></div>
+
+    <!-- PÁGINA 3: ALEMÁN -->
+    <div class="pdf-page">
+      <div class="pdf-header">
+        <h2>MietStart DE – Begriffs- & Kostenübersicht</h2>
+        <span>Página 3 de 3</span>
+      </div>
+
+      <div class="pdf-section">
+        <h3>1. Nettokaltmiete & Nebenkosten</h3>
+        <p><b>Nettokaltmiete:</b> Reines Nutzungsentgelt für den Wohnraum ohne Betriebskosten.</p>
+        <p><b>Nebenkosten (Warmmiete):</b> Vorauszahlungen für Heizung, Wasser, Müllabfuhr und Gebäudereinigung.</p>
+        <p><i>Hinweis:</i> Strom und Internet sind in der Regel separat anzumelden. Die jährliche Nebenkostenabrechnung zeigt den tatsächlichen Verbrauch.</p>
+      </div>
+
+      <div class="pdf-section">
+        <h3>2. Mietkaution</h3>
+        <p><b>Gesetzliche Grenze:</b> Maximal 3 Nettokaltmieten (§ 551 BGB).</p>
+        <p><b>Zahlung:</b> Recht auf Zahlung in 3 gleichen monatlichen Teilbeträgen.</p>
+        <p><b>Rückzahlung:</b> Nach Auszug hat der Vermieter eine angemessene Prüfungsfrist (in der Regel bis zu 6 Monate).</p>
+      </div>
+
+      <div class="pdf-section">
+        <h3>3. Ablösevereinbarung / Einbauküche (EBK)</h3>
+        <p><b>Übernahme:</b> Kauf von Küche oder Möbeln direkt vom Vormieter (nicht vom Vermieter).</p>
+        <p><b>Eigentum & Werterhalt:</b> Die Küche verbleibt im Eigentum des Mieters und kann beim Auszug an den Nachmieter weiterverkauft werden.</p>
+      </div>
+
+      <div class="pdf-section">
+        <h3>4. Logistik & Behörden</h3>
+        <p><b>Miettransporter & Halteverbotszone:</b> Praktische Bausteine für einen reibungslosen Umzugstag zur Vermeidung von Bußgeldern.</p>
+        <p><b>Nachsendeservice (Deutsche Post):</b> Postweiterleitung für 6–12 Monate zur Sicherung wichtiger Schreiben.</p>
+        <p><b>Rundfunkbeitrag (ARD/ZDF):</b> Gesetzlicher Pflichtbeitrag pro Wohnung.</p>
+      </div>
+
+      <div class="pdf-footer">
+        MietStart DE • Leitfaden und Begriffsübersicht für Mieter in Deutschland
+      </div>
+    </div>
+
 </div>
 
 <script>
@@ -282,18 +526,82 @@
         let halteverbotVal = includeHalteverbot ? 80 : 0;
         let postVal = includePost ? 35 : 0;
 
-        let total = kaltmiete + nebenkosten + kautionVal + transporterVal + halteverbotVal + postVal + kueche;
+        let warmmieteVal = kaltmiete + nebenkosten;
+        let total = warmmieteVal + kautionVal + transporterVal + halteverbotVal + postVal + kueche;
 
+        // Actualizar pantalla
         document.getElementById('totalAmount').innerText = total.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
         let breakdownHTML = `
-            <div class="breakdown-item"><span>Erste Monatsmiete:</span> <strong>${(kaltmiete + nebenkosten).toFixed(2)} €</strong></div>
+            <div class="breakdown-item"><span>Erste Monatsmiete:</span> <strong>${warmmieteVal.toFixed(2)} €</strong></div>
             <div class="breakdown-item"><span>Mietkaution:</span> <strong>${kautionVal.toFixed(2)} €</strong></div>
             <div class="breakdown-item"><span>Extras & Logistik:</span> <strong>${(transporterVal + halteverbotVal + postVal + kueche).toFixed(2)} €</strong></div>
         `;
         document.getElementById('breakdownList').innerHTML = breakdownHTML;
-    }
-</script>
 
+        // Actualizar datos del PDF
+        document.getElementById('pdf-warmmiete').innerText = warmmieteVal.toFixed(2) + ' €';
+        document.getElementById('pdf-kaution').innerText = kautionVal.toFixed(2) + ' €';
+        document.getElementById('pdf-abloese').innerText = kueche.toFixed(2) + ' €';
+        document.getElementById('pdf-transporter').innerText = (transporterVal + halteverbotVal).toFixed(2) + ' €';
+        document.getElementById('pdf-post').innerText = postVal.toFixed(2) + ' €';
+        document.getElementById('pdf-total').innerText = total.toFixed(2) + ' €';
+    }
+
+    function downloadPDF() {
+        const element = document.getElementById('pdf-template');
+        element.style.display = 'block';
+
+        const opt = {
+            margin:       0,
+            filename:     'MietStart_Dossier.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            element.style.display = 'none';
+        });
+    }
+
+    function showLegal(type) {
+        const modal = document.getElementById('legalModal');
+        const content = document.getElementById('modalContent');
+        
+        if (type === 'impressum') {
+            content.innerHTML = `
+                <h2 style="margin-top:0;">Impressum</h2>
+                <p><strong>Angaben gemäß § 5 DDG:</strong></p>
+                <p><strong>MietStart</strong><br>
+                Mercedes Herrera<br>
+                Grasriete 18<br>
+                49824 Emlichheim<br>
+                Deutschland</p>
+                <p><strong>Kontakt:</strong><br>
+                E-Mail: mietstartapp@gmail.com</p>
+                <p><strong>EU-Streitschlichtung:</strong><br>
+                Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: 
+                <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">https://ec.europa.eu/consumers/odr</a>.</p>
+            `;
+        } else if (type === 'datenschutz') {
+            content.innerHTML = `
+                <h2 style="margin-top:0;">Datenschutzerklärung</h2>
+                <p><strong>1. Datenschutz auf einen Blick</strong><br>
+                Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Diese Anwendung erfasst oder speichert keine personenbezogenen Daten direkt in eigenen Datenbanken. Alle Berechnungen erfolgen lokal auf Ihrem Gerät.</p>
+                <p><strong>2. Hosting (Vercel)</strong><br>
+                Diese Webseite wird bei Vercel Inc. gehostet. Beim Aufruf der Seite werden technische Daten (z. B. IP-Adresse, Server-Logfiles) automatisch erfasst.</p>
+                <p><strong>3. Zahlungsabwicklung (Gumroad)</strong><br>
+                Wenn Sie auf den Button zum Kauf des Dossiers klicken, werden Sie zu Gumroad Inc. weitergeleitet. Gumroad verarbeitet Ihre Daten (z. B. E-Mail, Zahlungsdaten) zur Kaufabwicklung und Zusendung des PDF-Dossiers. Es gelten die Datenschutzbestimmungen von Gumroad.</p>
+                <p><strong>4. Ihre Rechte</strong><br>
+                Sie haben das Recht auf Auskunft, Berichtigung oder Löschung Ihrer Daten. Kontaktieren Sie uns dazu unter: mietstartapp@gmail.com</p>
+            `;
+        }
+        modal.style.display = 'flex';
+    }
+
+    // Inicializar cálculo
+    calculate();
+</script>
 </body>
 </html>
